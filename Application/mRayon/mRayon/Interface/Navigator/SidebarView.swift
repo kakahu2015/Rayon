@@ -26,10 +26,7 @@ struct SidebarView: View {
     var sidebar: some View {
         List {
             app
-            monitor
-            terminals
-            transfers
-//            portForward
+            ssh
             if store.storeRecent { recent }
         }
         .listStyle(SidebarListStyle())
@@ -38,6 +35,21 @@ struct SidebarView: View {
 
     var app: some View {
         Section("App") {
+            NavigationLink {
+                BrowserContainerView(title: "OpenClaw", urlString: "https://openclaw.kakahu.org")
+            } label: {
+                Label("OpenClaw", systemImage: "network")
+            }
+            NavigationLink {
+                BrowserContainerView(title: "CF SSH", urlString: "https://ssh.kakahu.org")
+            } label: {
+                Label("CF SSH", systemImage: "lock.shield")
+            }
+        }
+    }
+
+    var ssh: some View {
+        Section("SSH") {
             NavigationLink {
                 MachineView()
             } label: {
