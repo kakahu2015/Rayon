@@ -34,54 +34,63 @@ struct WelcomeView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 20) {
                 launcherHero
 
                 launcherRouteCard(
-                    eyebrow: "Web Route",
+                    eyebrow: "Cloudflare Route",
                     title: "Cloudflare Tunnel SSH",
-                    subtitle: "Open the Cloudflare Tunnel protected Web SSH endpoint in the embedded browser.",
+                    subtitle: "Open the Cloudflare Tunnel SSH entry inside the embedded browser.",
                     systemImage: "lock.shield",
-                    tint: .mint
+                    tint: .mint,
+                    highlights: ["Tunnel Protected", "Embedded Browser"]
                 ) {
                     NavigationLink {
                         BrowserContainerView(title: "Cloudflare Tunnel SSH", urlString: defaultCFSSHURL)
                     } label: {
-                        Label("Open Web SSH", systemImage: "terminal")
-                            .frame(maxWidth: .infinity)
+                        launcherRouteButtonLabel(
+                            title: "Open Cloudflare Tunnel SSH",
+                            systemImage: "arrow.up.forward.app"
+                        )
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.mint)
+                    .buttonStyle(.plain)
                 }
 
                 launcherRouteCard(
                     eyebrow: "Native Route",
                     title: "Native SSH",
-                    subtitle: "Jump to the original native entry with quick connect, suggestions, and the animated shell-style background.",
+                    subtitle: "Jump into the original native flow with quick connect, suggestions, and the animated shell background.",
                     systemImage: "bolt.horizontal.circle",
-                    tint: .blue
+                    tint: .blue,
+                    highlights: ["Quick Connect", "Suggestions"]
                 ) {
                     NavigationLink {
                         NativeSSHConnectView()
                     } label: {
-                        Label("Enter Native SSH", systemImage: "chevron.right.circle.fill")
-                            .frame(maxWidth: .infinity)
+                        launcherRouteButtonLabel(
+                            title: "Enter Native SSH",
+                            systemImage: "chevron.right.circle.fill"
+                        )
                     }
-                    .buttonStyle(.bordered)
-                    .tint(.blue)
+                    .buttonStyle(.plain)
                 }
 
                 launcherActionCard(
                     title: "Ready to Launch",
-                    subtitle: "OpenClaw URL is editable, normalized to https when needed, and remembered automatically for later launches.",
+                    subtitle: "OpenClaw URL stays editable, is normalized to https when needed, and keeps the same automatic memory logic for later launches.",
                     systemImage: "checkmark.shield"
                 ) {
                     VStack(alignment: .leading, spacing: 12) {
-                        HStack(spacing: 10) {
-                            launcherStatusPill(title: "Saved", systemImage: "externaldrive.fill.badge.checkmark")
-                            launcherStatusPill(title: "Auto HTTPS", systemImage: "lock.rotation")
-                            launcherStatusPill(title: "Persistent", systemImage: "memorychip")
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 8) {
+                                launcherStatusPill(title: "Saved", systemImage: "externaldrive.fill.badge.checkmark")
+                                launcherStatusPill(title: "Auto HTTPS", systemImage: "lock.rotation")
+                            }
+
+                            HStack(spacing: 8) {
+                                launcherStatusPill(title: "Persistent", systemImage: "memorychip")
+                            }
                         }
 
                         VStack(alignment: .leading, spacing: 8) {
@@ -98,7 +107,7 @@ struct WelcomeView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.top, 8)
+            .padding(.top, 10)
             .padding(.bottom, 56)
         }
         .navigationTitle("Launcher")
@@ -123,24 +132,32 @@ struct WelcomeView: View {
                         colorCount: 10
                     )
                     .ignoresSafeArea()
-                    .opacity(0.22)
+                    .opacity(0.24)
                 }
             }
         )
         .overlay(alignment: .topTrailing) {
             Circle()
-                .fill(Color.mint.opacity(0.2))
-                .frame(width: 180, height: 180)
-                .blur(radius: 40)
-                .offset(x: 40, y: -20)
+                .fill(Color.mint.opacity(0.24))
+                .frame(width: 210, height: 210)
+                .blur(radius: 54)
+                .offset(x: 56, y: -24)
                 .allowsHitTesting(false)
         }
         .overlay(alignment: .topLeading) {
             Circle()
-                .fill(Color.blue.opacity(0.18))
-                .frame(width: 220, height: 220)
-                .blur(radius: 48)
-                .offset(x: -50, y: 40)
+                .fill(Color.blue.opacity(0.2))
+                .frame(width: 240, height: 240)
+                .blur(radius: 56)
+                .offset(x: -60, y: 36)
+                .allowsHitTesting(false)
+        }
+        .overlay(alignment: .top) {
+            Circle()
+                .fill(Color.white.opacity(0.08))
+                .frame(width: 180, height: 180)
+                .blur(radius: 42)
+                .offset(y: -70)
                 .allowsHitTesting(false)
         }
         .overlay(alignment: .bottom) {
@@ -154,46 +171,55 @@ struct WelcomeView: View {
     private var launcherHero: some View {
         launcherActionCard(
             title: "OpenClaw Gateway",
-            subtitle: "A focused iPhone launcher with a stronger hierarchy, deeper layers, and direct access to your saved control plane."
+            subtitle: "An iPhone-first launcher with a stronger visual anchor, deeper glow, and direct paths into OpenClaw, Cloudflare Tunnel SSH, and native SSH."
         ) {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .center, spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.mint.opacity(0.3))
-                            .frame(width: 76, height: 76)
-                            .blur(radius: 12)
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [.blue.opacity(0.95), .mint.opacity(0.8)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                    .stroke(Color.white.opacity(0.25), lineWidth: 1)
-                            )
-                        Image(systemName: "network")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                    }
-                    .frame(width: 66, height: 66)
-                    .shadow(color: .mint.opacity(0.35), radius: 18, x: 0, y: 10)
+            VStack(alignment: .leading, spacing: 18) {
+                ZStack {
+                    Circle()
+                        .fill(Color.mint.opacity(0.2))
+                        .frame(width: 156, height: 156)
+                        .blur(radius: 24)
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Launcher")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                        Text("OpenClaw, Web SSH, and native controls in one mobile-first entry point.")
-                            .font(.system(.subheadline, design: .rounded))
-                            .foregroundColor(.secondary)
-                    }
+                    Circle()
+                        .fill(Color.blue.opacity(0.18))
+                        .frame(width: 124, height: 124)
+                        .blur(radius: 18)
+                        .offset(x: -14, y: 10)
+
+                    RoundedRectangle(cornerRadius: 34, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [.blue.opacity(0.96), .mint.opacity(0.84)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 108, height: 108)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 34, style: .continuous)
+                                .stroke(Color.white.opacity(0.26), lineWidth: 1)
+                        )
+                        .shadow(color: .mint.opacity(0.35), radius: 22, x: 0, y: 14)
+
+                    Image(systemName: "network")
+                        .font(.system(size: 42, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Launcher")
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+
+                    Text("Single-column rhythm, stronger hierarchy, and a cleaner mobile entry for your saved control plane.")
+                        .font(.system(.subheadline, design: .rounded))
+                        .foregroundColor(.secondary)
                 }
 
                 HStack(spacing: 8) {
                     launcherStatusPill(title: "iPhone First", systemImage: "iphone")
-                    launcherStatusPill(title: "Layered UI", systemImage: "square.stack.3d.up.fill")
+                    launcherStatusPill(title: "Deep Glow", systemImage: "sparkles")
                 }
 
                 VStack(alignment: .leading, spacing: 8) {
@@ -207,10 +233,14 @@ struct WelcomeView: View {
                         .disableAutocorrection(true)
                         .font(.system(.body, design: .monospaced))
                         .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, 13)
                         .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.black.opacity(0.12))
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(Color.black.opacity(0.16))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
                         )
                         .onChange(of: managementInput) { newValue in
                             managementURL = newValue
@@ -224,12 +254,14 @@ struct WelcomeView: View {
                         .foregroundColor(.secondary)
                 }
 
-                HStack(spacing: 10) {
+                VStack(spacing: 10) {
                     Button {
                         openManagementURL()
                     } label: {
                         Label("Open OpenClaw", systemImage: "arrow.up.forward.app")
+                            .font(.system(.headline, design: .rounded).weight(.semibold))
                             .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
                     }
                     .buttonStyle(.borderedProminent)
 
@@ -237,7 +269,7 @@ struct WelcomeView: View {
                         managementInput = defaultOpenClawURL
                         managementURL = defaultOpenClawURL
                     } label: {
-                        Label("Reset", systemImage: "arrow.counterclockwise")
+                        Label("Reset to Default", systemImage: "arrow.counterclockwise")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
@@ -260,10 +292,11 @@ struct WelcomeView: View {
         subtitle: String,
         systemImage: String,
         tint: Color,
+        highlights: [String],
         @ViewBuilder content: () -> Content
     ) -> some View {
         launcherActionCard(title: title, subtitle: subtitle, systemImage: systemImage) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 14) {
                 Text(eyebrow.uppercased())
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundColor(tint)
@@ -274,9 +307,52 @@ struct WelcomeView: View {
                             .fill(tint.opacity(0.14))
                     )
 
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(highlights, id: \.self) { item in
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(tint)
+                            Text(item)
+                                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                        }
+                    }
+                }
+
                 content()
             }
         }
+    }
+
+    private func launcherRouteButtonLabel(title: String, systemImage: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.system(size: 18, weight: .semibold, design: .rounded))
+
+            Text(title)
+                .font(.system(.headline, design: .rounded).weight(.semibold))
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [.primary.opacity(0.9), .primary.opacity(0.72)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+        )
     }
 
     @ViewBuilder
@@ -299,13 +375,23 @@ struct WelcomeView: View {
                 .foregroundColor(.secondary)
             content()
         }
-        .padding()
+        .padding(18)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.12), Color.clear, Color.white.opacity(0.04)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.08), radius: 18, x: 0, y: 12)
