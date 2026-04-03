@@ -53,21 +53,6 @@ struct SidebarView: View {
             } label: {
                 Label("Identity", systemImage: "person")
             }
-            NavigationLink {
-                SnippetView()
-            } label: {
-                Label("Snippet", systemImage: "chevron.left.forwardslash.chevron.right")
-            }
-            NavigationLink {
-                PortForwardView()
-            } label: {
-                Label("Port Forward", systemImage: "arrow.left.arrow.right")
-            }
-            NavigationLink {
-                SettingView()
-            } label: {
-                Label("Setting", systemImage: "gear")
-            }
         }
     }
 
