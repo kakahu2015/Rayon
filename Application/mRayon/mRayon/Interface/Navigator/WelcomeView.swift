@@ -68,11 +68,11 @@ struct WelcomeView: View {
 
                 launcherCard(
                     title: "Native SSH",
-                    subtitle: "Enter the original Rayon quick connect page and native terminal workflow.",
+                    subtitle: "Open the original app settings and native management entry.",
                     systemImage: "bolt.horizontal.circle"
                 ) {
                     NavigationLink {
-                        NativeSSHConnectView()
+                        SettingView()
                     } label: {
                         Label("Enter Native SSH", systemImage: "chevron.right.circle.fill")
                             .frame(maxWidth: .infinity)
