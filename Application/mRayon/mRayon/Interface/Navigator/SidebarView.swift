@@ -10,13 +10,6 @@ import SwiftUI
 import WebKit
 
 struct SidebarView: View {
-    @EnvironmentObject var store: RayonStore
-
-    @StateObject var monitorManager = MonitorManager.shared
-    @StateObject var terminalManager = TerminalManager.shared
-    @StateObject var forwardBackend = PortForwardBackend.shared
-    @StateObject var transferBackend = FileTransferManager.shared
-
     var body: some View {
         NavigationView {
             sidebar
@@ -25,205 +18,81 @@ struct SidebarView: View {
     }
 
     var sidebar: some View {
-        List {
-            app
-            ssh
-            if store.storeRecent { recent }
-        }
-        .listStyle(SidebarListStyle())
-        .navigationTitle("Rayon")
-    }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                SidebarLinkCard(
+                    title: "OpenClaw",
+                    subtitle: "Open the management page in an embedded browser.",
+                    systemImage: "network"
+                ) {
+                    SidebarBrowserContainerView(title: "OpenClaw", urlString: "https://openclaw.kakahu.org")
+                }
 
-    var app: some View {
-        Section("App") {
-            NavigationLink {
-                SidebarBrowserContainerView(title: "OpenClaw", urlString: "https://openclaw.kakahu.org")
-            } label: {
-                Label("OpenClaw", systemImage: "network")
-            }
-            NavigationLink {
-                SidebarBrowserContainerView(title: "CF SSH", urlString: "https://ssh.kakahu.org")
-            } label: {
-                Label("CF SSH", systemImage: "lock.shield")
-            }
-        }
-    }
+                SidebarLinkCard(
+                    title: "CF SSH",
+                    subtitle: "Open the Cloudflare Access protected Web SSH endpoint.",
+                    systemImage: "lock.shield"
+                ) {
+                    SidebarBrowserContainerView(title: "CF SSH", urlString: "https://ssh.kakahu.org")
+                }
 
-    var ssh: some View {
-        Section("SSH") {
-            NavigationLink {
-                MachineView()
-            } label: {
-                Label("Machine", systemImage: "server.rack")
-            }
-            NavigationLink {
-                IdentityView()
-            } label: {
-                Label("Identity", systemImage: "person")
-            }
-        }
-    }
+                SidebarLinkCard(
+                    title: "Machine",
+                    subtitle: "Manage saved hosts and connection targets.",
+                    systemImage: "server.rack"
+                ) {
+                    MachineView()
+                }
 
-    var recent: some View {
-        Section("Recent") {
-            if store.recentRecord.count > 0 {
-                ForEach(store.recentRecord) { record in
-                    switch record {
-                    case let .command(command): recentButton(for: command)
-                    case let .machine(machine): recentButton(for: machine)
-                    }
-                }
-                Button {
-                    clearRecentTapped()
-                } label: {
-                    HStack {
-                        Label("Clear Recent", systemImage: "trash")
-                        Spacer()
-                    }
-                }
-                .buttonStyle(PlainButtonStyle())
-                .expended()
-            } else {
-                Button {} label: {
-                    HStack {
-                        Label("No Recent", systemImage: "square.dashed")
-                        Spacer()
-                    }
-                }
-                .buttonStyle(PlainButtonStyle())
-                .expended()
-            }
-        }
-    }
-
-    var monitor: some View {
-        Section("Monitor") {
-            if monitorManager.monitors.isEmpty {
-                Button {} label: {
-                    HStack {
-                        Label("No Session", systemImage: "square.dashed")
-                        Spacer()
-                    }
-                }
-                .buttonStyle(PlainButtonStyle())
-                .expended()
-            } else {
-                ForEach(monitorManager.monitors) { context in
-                    NavigationLink {
-                        MonitorView(context: context)
-                    } label: {
-                        Label(context.title, systemImage: "text.magnifyingglass")
-                    }
-                    .swipeActions {
-                        Button {
-                            monitorManager.end(for: context.id)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                        .tint(.red)
-                    }
+                SidebarLinkCard(
+                    title: "Identity",
+                    subtitle: "Manage usernames, passwords, and SSH keys.",
+                    systemImage: "person"
+                ) {
+                    IdentityView()
                 }
             }
+            .padding()
         }
+        .background(Color(.systemGroupedBackground))
     }
-
-    var terminals: some View {
-        Section("Terminals") {
-            if terminalManager.terminals.isEmpty {
-                Button {} label: {
-                    HStack {
-                        Label("No Session", systemImage: "square.dashed")
-                        Spacer()
-                    }
-                }
-                .buttonStyle(PlainButtonStyle())
-                .expended()
-            } else {
-                ForEach(terminalManager.terminals) { context in
-                    NavigationLink {
-                        TerminalView(context: context)
-                    } label: {
-                        Label(context.navigationTitle, systemImage: "terminal")
-                    }
-                    .swipeActions {
-                        Button {
-                            terminalManager.end(for: context.id)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                        .tint(.red)
-                    }
-                }
-            }
-        }
-    }
-
-    var transfers: some View {
-        Section("File Transfer") {
-            if transferBackend.transfers.isEmpty {
-                Button {} label: {
-                    HStack {
-                        Label("No Session", systemImage: "square.dashed")
-                        Spacer()
-                    }
-                }
-                .buttonStyle(PlainButtonStyle())
-                .expended()
-            } else {
-                ForEach(transferBackend.transfers) { context in
-                    NavigationLink {
-                        FileTransferView(context: context)
-                    } label: {
-                        Label(context.navigationTitle, systemImage: "externaldrive.connected.to.line.below")
-                    }
-                    .swipeActions {
-                        Button {
-                            transferBackend.end(for: context.id)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                        .tint(.red)
-                    }
-                }
-            }
-        }
-    }
-
-//    var portForward: some View {
-//        Section("Port Forward") {
-//            if forwardBackend.container.isEmpty {
-//                Button {} label: {
-//                    HStack {
-//                        Label("No Session", systemImage: "square.dashed")
-//                        Spacer()
-//                    }
-//                }
-//                .buttonStyle(PlainButtonStyle())
-//                .expended()
-//            } else {
-//                ForEach(forwardBackend.container) { context in
-//                    NavigationLink {
-//                        PortForwardExecView(context: context)
-//                    } label: {
-//                        Label(
-//                            context.info.shortDescription(),
-//                            systemImage: context.info.forwardOrientation == .listenLocal ? "l.joystick.tilt.right" : "r.joystick.tilt.right"
-//                        )
-//                    }
-//                    .swipeActions {
-//                        Button {
-//                            forwardBackend.end(for: context.id)
-//                        } label: {
-//                            Label("Delete", systemImage: "trash")
-//                        }
-//                        .tint(.red)
-//                    }
-//                }
-//            }
-//        }
-//    }
 }
 
+private struct SidebarLinkCard<Destination: View>: View {
+    let title: String
+    let subtitle: String
+    let systemImage: String
+    let destination: Destination
+
+    init(title: String, subtitle: String, systemImage: String, @ViewBuilder destination: () -> Destination) {
+        self.title = title
+        self.subtitle = subtitle
+        self.systemImage = systemImage
+        self.destination = destination()
+    }
+
+    var body: some View {
+        NavigationLink {
+            destination
+        } label: {
+            VStack(alignment: .leading, spacing: 10) {
+                Label(title, systemImage: systemImage)
+                    .font(.system(.title3, design: .rounded).weight(.semibold))
+                    .foregroundColor(.primary)
+                Text(subtitle)
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundColor(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color(.secondarySystemBackground))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
 
 private struct SidebarBrowserContainerView: View {
     let title: String
