@@ -7,6 +7,7 @@
 
 import RayonModule
 import SwiftUI
+import WebKit
 
 struct SidebarView: View {
     @EnvironmentObject var store: RayonStore
@@ -36,12 +37,12 @@ struct SidebarView: View {
     var app: some View {
         Section("App") {
             NavigationLink {
-                BrowserContainerView(title: "OpenClaw", urlString: "https://openclaw.kakahu.org")
+                SidebarBrowserContainerView(title: "OpenClaw", urlString: "https://openclaw.kakahu.org")
             } label: {
                 Label("OpenClaw", systemImage: "network")
             }
             NavigationLink {
-                BrowserContainerView(title: "CF SSH", urlString: "https://ssh.kakahu.org")
+                SidebarBrowserContainerView(title: "CF SSH", urlString: "https://ssh.kakahu.org")
             } label: {
                 Label("CF SSH", systemImage: "lock.shield")
             }
@@ -221,4 +222,45 @@ struct SidebarView: View {
 //            }
 //        }
 //    }
+}
+
+
+private struct SidebarBrowserContainerView: View {
+    let title: String
+    let urlString: String
+
+    var body: some View {
+        SidebarEmbeddedWebView(urlString: urlString)
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .ignoresSafeArea(edges: .bottom)
+    }
+}
+
+private struct SidebarEmbeddedWebView: UIViewRepresentable {
+    let urlString: String
+
+    func makeUIView(context: Context) -> WKWebView {
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .default()
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.allowsBackForwardNavigationGestures = true
+        load(urlString, into: webView)
+        return webView
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        guard let current = webView.url?.absoluteString else {
+            load(urlString, into: webView)
+            return
+        }
+        if current != urlString {
+            load(urlString, into: webView)
+        }
+    }
+
+    private func load(_ value: String, into webView: WKWebView) {
+        guard let url = URL(string: value) else { return }
+        webView.load(URLRequest(url: url))
+    }
 }
