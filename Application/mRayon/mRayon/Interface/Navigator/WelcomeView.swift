@@ -13,7 +13,7 @@ import WebKit
 private var importData: Data?
 
 struct WelcomeView: View {
-    @State private var managementURL: String = "https://openclaw.kakahu.org"
+    @AppStorage("launcher.managementURL") private var managementURL: String = "https://openclaw.kakahu.org"
     @State private var preparedManagementURL: String = "https://openclaw.kakahu.org"
     @State private var managementActive: Bool = false
 
