@@ -8,10 +8,150 @@
 import Colorful
 import RayonModule
 import SwiftUI
+import WebKit
 
 private var importData: Data?
 
 struct WelcomeView: View {
+    @State private var managementURL: String = "https://openclaw.kakahu.org"
+    @State private var preparedManagementURL: String = "https://openclaw.kakahu.org"
+    @State private var managementActive: Bool = false
+
+    private let cfSSHURL = "https://ssh.kakahu.org"
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                launcherCard(
+                    title: "OpenClaw",
+                    subtitle: "Input a management URL and open it directly in an embedded browser.",
+                    systemImage: "network"
+                ) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        TextField("https://example.com", text: $managementURL)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .keyboardType(.URL)
+                            .textInputAutocapitalization(.never)
+                            .disableAutocorrection(true)
+
+                        Button {
+                            preparedManagementURL = normalizedURL(from: managementURL)
+                            managementActive = true
+                        } label: {
+                            Label("Open URL", systemImage: "arrow.up.forward.app")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+
+                        NavigationLink(
+                            destination: BrowserContainerView(title: "OpenClaw", urlString: preparedManagementURL),
+                            isActive: $managementActive
+                        ) {
+                            EmptyView()
+                        }
+                    }
+                }
+
+                launcherCard(
+                    title: "CF SSH",
+                    subtitle: "Open the Cloudflare Access protected Web SSH endpoint.",
+                    systemImage: "lock.shield"
+                ) {
+                    NavigationLink {
+                        BrowserContainerView(title: "CF SSH", urlString: cfSSHURL)
+                    } label: {
+                        Label(cfSSHURL, systemImage: "terminal")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+
+                launcherCard(
+                    title: "Native SSH",
+                    subtitle: "Enter the original Rayon quick connect page and native terminal workflow.",
+                    systemImage: "bolt.horizontal.circle"
+                ) {
+                    NavigationLink {
+                        NativeSSHConnectView()
+                    } label: {
+                        Label("Enter Native SSH", systemImage: "chevron.right.circle.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+            .padding()
+        }
+        .navigationTitle("Launcher")
+    }
+
+    @ViewBuilder
+    private func launcherCard<Content: View>(title: String, subtitle: String, systemImage: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label(title, systemImage: systemImage)
+                .font(.system(.title3, design: .rounded).weight(.semibold))
+            Text(subtitle)
+                .font(.system(.subheadline, design: .rounded))
+                .foregroundColor(.secondary)
+            content()
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+
+    private func normalizedURL(from value: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "https://openclaw.kakahu.org" }
+        if trimmed.contains("://") { return trimmed }
+        return "https://" + trimmed
+    }
+}
+
+private struct BrowserContainerView: View {
+    let title: String
+    let urlString: String
+
+    var body: some View {
+        EmbeddedWebView(urlString: urlString)
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .ignoresSafeArea(edges: .bottom)
+    }
+}
+
+private struct EmbeddedWebView: UIViewRepresentable {
+    let urlString: String
+
+    func makeUIView(context: Context) -> WKWebView {
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = .default()
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.allowsBackForwardNavigationGestures = true
+        webView.scrollView.keyboardDismissMode = .interactive
+        load(urlString, into: webView)
+        return webView
+    }
+
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        guard let current = webView.url?.absoluteString else {
+            load(urlString, into: webView)
+            return
+        }
+        if current != urlString {
+            load(urlString, into: webView)
+        }
+    }
+
+    private func load(_ value: String, into webView: WKWebView) {
+        guard let url = URL(string: value) else { return }
+        webView.load(URLRequest(url: url))
+    }
+}
+
+struct NativeSSHConnectView: View {
     @EnvironmentObject var store: RayonStore
 
     @State var quickConnect: String = ""
@@ -51,14 +191,12 @@ struct WelcomeView: View {
                         .font(.system(.headline, design: .rounded))
                         .onChange(of: quickConnect, perform: { newValue in
                             if newValue.hasPrefix("ssh ssh ") {
-                                // user pasting command
                                 quickConnect.removeFirst("ssh ".count)
                             }
                             buttonDisabled = SSHCommandReader(command: newValue) == nil
                             refreshSuggestion()
                         })
                         .onChange(of: textFieldIsFocused, perform: { newValue in
-                            // Autofill "ssh " if the text field is empty.
                             if newValue, quickConnect.isEmpty {
                                 quickConnect = "ssh "
                             }
@@ -121,7 +259,7 @@ struct WelcomeView: View {
             Spacer()
                 .frame(height: 40)
         }
-        .navigationTitle("Connect")
+        .navigationTitle("Native SSH")
         .padding()
         .expended()
         .background(
@@ -166,7 +304,7 @@ struct WelcomeView: View {
             fillSuggestion()
         }) {
             HStack {
-                Text("Did you mean \"\(suggestion!)\"?")
+                Text("Did you mean "\(suggestion!)"?")
                     .foregroundColor(.white)
                     .font(.system(.headline, design: .rounded))
             }
@@ -201,65 +339,7 @@ struct WelcomeView: View {
 }
 
 struct JustWelcomeView: View {
-    @EnvironmentObject var store: RayonStore
-
-    var version: String {
-        var ret = "Version: " +
-            (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")
-            + " Build: " +
-            (Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown")
-        #if DEBUG
-            ret += " DEBUG"
-        #endif
-        return ret
-    }
-
     var body: some View {
-        VStack(alignment: .center, spacing: 10) {
-            Image("Avatar")
-                .antialiased(true)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 128, height: 128)
-        }
-        .padding()
-        .expended()
-        .background(
-            Group {
-                if !store.reducedViewEffects {
-                    StarLinkView().ignoresSafeArea()
-                }
-            }
-        )
-        .background(
-            Group {
-                if !store.reducedViewEffects {
-                    ColorfulView(
-                        colors: [Color.accentColor],
-                        colorCount: 16
-                    )
-                    .ignoresSafeArea()
-                    .opacity(0.25)
-                }
-            }
-        )
-        .overlay(
-            VStack {
-                Spacer()
-                Text(version)
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .opacity(0.5)
-                Spacer()
-                    .frame(height: 20)
-            }
-        )
-    }
-}
-
-struct WelcomeView_Previews: PreviewProvider {
-    static var previews: some View {
-        createPreview {
-            AnyView(WelcomeView())
-        }
+        WelcomeView()
     }
 }
