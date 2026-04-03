@@ -11,6 +11,7 @@ import WebKit
 
 struct SidebarView: View {
     @EnvironmentObject var store: RayonStore
+    @AppStorage("launcher.managementURL") private var managementURL: String = defaultOpenClawURL
 
     var body: some View {
         NavigationView {
@@ -27,7 +28,7 @@ struct SidebarView: View {
                     subtitle: "Open the management page in an embedded browser.",
                     systemImage: "network"
                 ) {
-                    SidebarBrowserContainerView(title: "OpenClaw", urlString: "https://openclaw.kakahu.org")
+                    SidebarBrowserContainerView(title: "OpenClaw", urlString: normalizedManagementURL)
                 }
 
                 SidebarLinkCard(
@@ -57,6 +58,13 @@ struct SidebarView: View {
             .padding()
         }
         .background(Color(.systemGroupedBackground))
+    }
+
+    private var normalizedManagementURL: String {
+        let trimmed = managementURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return defaultOpenClawURL }
+        if trimmed.contains("://") { return trimmed }
+        return "https://" + trimmed
     }
 }
 

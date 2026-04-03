@@ -11,85 +11,220 @@ import SwiftUI
 import WebKit
 
 private var importData: Data?
+let defaultOpenClawURL = "https://openclaw.kakahu.org"
+let defaultCFSSHURL = "https://ssh.kakahu.org"
 
 struct WelcomeView: View {
-    @AppStorage("launcher.managementURL") private var managementURL: String = "https://openclaw.kakahu.org"
-    @State private var preparedManagementURL: String = "https://openclaw.kakahu.org"
+    @EnvironmentObject var store: RayonStore
+
+    @AppStorage("launcher.managementURL") private var managementURL: String = defaultOpenClawURL
+    @State private var managementInput: String = ""
+    @State private var preparedManagementURL: String = defaultOpenClawURL
     @State private var managementActive: Bool = false
 
-    private let cfSSHURL = "https://ssh.kakahu.org"
+    private var version: String {
+        var ret = "Version: " +
+            (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")
+            + " Build: " +
+            (Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown")
+        #if DEBUG
+            ret += " DEBUG"
+        #endif
+        return ret
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                launcherCard(
-                    title: "OpenClaw",
-                    subtitle: "Input a management URL and open it directly in an embedded browser.",
-                    systemImage: "network"
-                ) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        TextField("https://example.com", text: $managementURL)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .keyboardType(.URL)
-                            .textInputAutocapitalization(.never)
-                            .disableAutocorrection(true)
+                launcherHero
 
-                        Button {
-                            preparedManagementURL = normalizedURL(from: managementURL)
-                            managementActive = true
+                HStack(alignment: .top, spacing: 14) {
+                    launcherActionCard(
+                        title: "CF SSH",
+                        subtitle: "Open the Cloudflare Access protected Web SSH endpoint in the embedded browser.",
+                        systemImage: "lock.shield"
+                    ) {
+                        NavigationLink {
+                            BrowserContainerView(title: "CF SSH", urlString: defaultCFSSHURL)
                         } label: {
-                            Label("Open URL", systemImage: "arrow.up.forward.app")
+                            Label("Open Web SSH", systemImage: "terminal")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
+                        .tint(.mint)
+                    }
 
-                        NavigationLink(
-                            destination: BrowserContainerView(title: "OpenClaw", urlString: preparedManagementURL),
-                            isActive: $managementActive
-                        ) {
-                            EmptyView()
+                    launcherActionCard(
+                        title: "Native SSH",
+                        subtitle: "Jump to the original native entry with quick connect and animated background.",
+                        systemImage: "bolt.horizontal.circle"
+                    ) {
+                        NavigationLink {
+                            NativeSSHConnectView()
+                        } label: {
+                            Label("Enter Native SSH", systemImage: "chevron.right.circle.fill")
+                                .frame(maxWidth: .infinity)
                         }
+                        .buttonStyle(.bordered)
                     }
                 }
 
-                launcherCard(
-                    title: "CF SSH",
-                    subtitle: "Open the Cloudflare Access protected Web SSH endpoint.",
-                    systemImage: "lock.shield"
+                launcherActionCard(
+                    title: "Quick Notes",
+                    subtitle: "OpenClaw URL is editable, normalized to https when needed, and remembered automatically for later launches.",
+                    systemImage: "checkmark.shield"
                 ) {
-                    NavigationLink {
-                        BrowserContainerView(title: "CF SSH", urlString: cfSSHURL)
-                    } label: {
-                        Label(cfSSHURL, systemImage: "terminal")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("Saved destination", systemImage: "link")
+                            .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                            .foregroundColor(.secondary)
 
-                launcherCard(
-                    title: "Native SSH",
-                    subtitle: "Open the original app settings and native management entry.",
-                    systemImage: "bolt.horizontal.circle"
-                ) {
-                    NavigationLink {
-                        SettingView()
-                    } label: {
-                        Label("Enter Native SSH", systemImage: "chevron.right.circle.fill")
-                            .frame(maxWidth: .infinity)
+                        Text(normalizedURL(from: managementURL))
+                            .font(.system(.subheadline, design: .monospaced))
+                            .foregroundColor(.primary)
+                            .textSelection(.enabled)
                     }
-                    .buttonStyle(.bordered)
                 }
             }
             .padding()
         }
         .navigationTitle("Launcher")
+        .navigationBarTitleDisplayMode(.large)
+        .onAppear {
+            if managementInput.isEmpty {
+                managementInput = managementURL
+            }
+        }
+        .background(
+            Group {
+                if !store.reducedViewEffects {
+                    StarLinkView().ignoresSafeArea()
+                }
+            }
+        )
+        .background(
+            Group {
+                if !store.reducedViewEffects {
+                    ColorfulView(
+                        colors: [Color.accentColor, .mint, .blue],
+                        colorCount: 10
+                    )
+                    .ignoresSafeArea()
+                    .opacity(0.2)
+                }
+            }
+        )
+        .overlay(alignment: .bottom) {
+            Text(version)
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .opacity(0.45)
+                .padding(.bottom, 18)
+        }
+    }
+
+    private var launcherHero: some View {
+        launcherActionCard(
+            title: "OpenClaw Gateway",
+            subtitle: "Bring back the layered native-style landing page, then jump into your management URL from here."
+        ) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .center, spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [.blue.opacity(0.85), .mint.opacity(0.75)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                        Image(systemName: "network")
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
+                            .foregroundColor(.white)
+                    }
+                    .frame(width: 58, height: 58)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Launcher")
+                            .font(.system(.title2, design: .rounded).weight(.bold))
+                        Text("A richer entry page for OpenClaw, Web SSH, and native controls.")
+                            .font(.system(.subheadline, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("OpenClaw URL")
+                        .font(.system(.headline, design: .rounded))
+
+                    TextField("https://example.com", text: $managementInput)
+                        .textFieldStyle(.plain)
+                        .keyboardType(.URL)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
+                        .font(.system(.body, design: .monospaced))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color.black.opacity(0.12))
+                        )
+                        .onChange(of: managementInput) { newValue in
+                            managementURL = newValue
+                        }
+                        .onSubmit {
+                            openManagementURL()
+                        }
+
+                    Text("Examples: `openclaw.example.com` or a full `https://...` URL.")
+                        .font(.system(.footnote, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+
+                HStack(spacing: 10) {
+                    Button {
+                        openManagementURL()
+                    } label: {
+                        Label("Open OpenClaw", systemImage: "arrow.up.forward.app")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button {
+                        managementInput = defaultOpenClawURL
+                        managementURL = defaultOpenClawURL
+                    } label: {
+                        Label("Reset", systemImage: "arrow.counterclockwise")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                }
+
+                NavigationLink(
+                    destination: BrowserContainerView(title: "OpenClaw", urlString: preparedManagementURL),
+                    isActive: $managementActive
+                ) {
+                    EmptyView()
+                }
+            }
+        }
     }
 
     @ViewBuilder
-    private func launcherCard<Content: View>(title: String, subtitle: String, systemImage: String, @ViewBuilder content: () -> Content) -> some View {
+    private func launcherActionCard<Content: View>(
+        title: String,
+        subtitle: String,
+        systemImage: String? = nil,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(title, systemImage: systemImage)
-                .font(.system(.title3, design: .rounded).weight(.semibold))
+            if let systemImage {
+                Label(title, systemImage: systemImage)
+                    .font(.system(.title3, design: .rounded).weight(.semibold))
+            } else {
+                Text(title)
+                    .font(.system(.title3, design: .rounded).weight(.semibold))
+            }
             Text(subtitle)
                 .font(.system(.subheadline, design: .rounded))
                 .foregroundColor(.secondary)
@@ -98,15 +233,27 @@ struct WelcomeView: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
+                .fill(.ultraThinMaterial)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
     }
 
     private func normalizedURL(from value: String) -> String {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return "https://openclaw.kakahu.org" }
+        guard !trimmed.isEmpty else { return defaultOpenClawURL }
         if trimmed.contains("://") { return trimmed }
         return "https://" + trimmed
+    }
+
+    private func openManagementURL() {
+        let normalized = normalizedURL(from: managementInput)
+        managementInput = normalized
+        managementURL = normalized
+        preparedManagementURL = normalized
+        managementActive = true
     }
 }
 
