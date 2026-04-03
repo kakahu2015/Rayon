@@ -19,7 +19,7 @@ struct SidebarView: View {
     var body: some View {
         NavigationView {
             sidebar
-            JustWelcomeView()
+            WelcomeView()
         }
     }
 
@@ -41,7 +41,7 @@ struct SidebarView: View {
             NavigationLink {
                 WelcomeView()
             } label: {
-                Label("Connect", systemImage: "paperplane")
+                Label("Launcher", systemImage: "square.grid.2x2")
             }
             NavigationLink {
                 MachineView()
@@ -219,7 +219,7 @@ struct SidebarView: View {
 //                    }
 //                    .swipeActions {
 //                        Button {
-//                            forwardBackend.endSession(withPortForwardID: context.info.id)
+//                            forwardBackend.end(for: context.id)
 //                        } label: {
 //                            Label("Delete", systemImage: "trash")
 //                        }
@@ -229,12 +229,4 @@ struct SidebarView: View {
 //            }
 //        }
 //    }
-}
-
-struct SidebarView_Previews: PreviewProvider {
-    static var previews: some View {
-        SidebarView()
-            .previewDevice(PreviewDevice(rawValue: "iPad mini (6th generation)"))
-            .previewInterfaceOrientation(.landscapeLeft)
-    }
 }
