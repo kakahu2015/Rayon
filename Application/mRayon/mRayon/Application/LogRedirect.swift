@@ -32,16 +32,6 @@ class LogRedirect {
     }
 
     func checkPipe() {
-        guard let handler = handler, let path = path?.path else {
-            return
-        }
-        #if DEBUG
-            guard UserDefaults.standard.value(forKey: "wiki.qaq.redirect.diag") as? Bool ?? false else {
-                return
-            }
-        #endif
-        debugPrint("calling dup2 on stdout and stderr with \(path)")
-        dup2(handler.fileDescriptor, STDOUT_FILENO)
-        dup2(handler.fileDescriptor, STDERR_FILENO)
+        return
     }
 }
