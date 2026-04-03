@@ -11,11 +11,18 @@ import WebKit
 
 struct SidebarView: View {
     @EnvironmentObject var store: RayonStore
+
     @AppStorage("launcher.managementURL") private var managementURL: String = defaultOpenClawURL
+    @AppStorage("launcher.cfsshURL") private var cfsshURL: String = defaultCFSSHURL
 
     @State private var managementInput: String = ""
+    @State private var cfsshInput: String = ""
+
     @State private var preparedManagementURL: String = defaultOpenClawURL
+    @State private var preparedCFSSHURL: String = defaultCFSSHURL
+
     @State private var managementActive: Bool = false
+    @State private var cfsshActive: Bool = false
 
     var body: some View {
         NavigationView {
@@ -26,45 +33,63 @@ struct SidebarView: View {
             if managementInput.isEmpty {
                 managementInput = managementURL
             }
+            if cfsshInput.isEmpty {
+                cfsshInput = cfsshURL
+            }
         }
     }
 
     var sidebar: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 18) {
-                launcherCard
+            VStack(alignment: .leading, spacing: 14) {
+                editableURLCard(
+                    title: "OpenClaw",
+                    buttonTitle: "Open OpenClaw",
+                    placeholder: "https://openclaw.example.com",
+                    systemImage: "network",
+                    tint: .accentColor,
+                    text: $managementInput,
+                    savedValue: normalizedManagementURL,
+                    persistAction: { managementURL = $0 },
+                    openAction: openManagementURL,
+                    resetAction: resetManagementURL
+                )
 
-                SidebarFeatureCard(
-                    eyebrow: "Cloudflare Route",
+                editableURLCard(
                     title: "Cloudflare Tunnel SSH",
-                    subtitle: "Open the Cloudflare Tunnel protected SSH web entry in the embedded browser.",
+                    buttonTitle: "Open Cloudflare Tunnel SSH",
+                    placeholder: "https://ssh.example.com",
                     systemImage: "lock.shield",
                     tint: .mint,
-                    badges: ["Tunnel Protected", "Embedded Browser"]
-                ) {
-                    SidebarBrowserContainerView(title: "Cloudflare Tunnel SSH", urlString: "https://ssh.kakahu.org")
+                    text: $cfsshInput,
+                    savedValue: normalizedCFSSHURL,
+                    persistAction: { cfsshURL = $0 },
+                    openAction: openCFSSHURL,
+                    resetAction: resetCFSSHURL
+                )
+
+                HStack(spacing: 10) {
+                    SidebarCompactNavCard(title: "Machine", systemImage: "server.rack", tint: .blue) {
+                        MachineView()
+                    }
+
+                    SidebarCompactNavCard(title: "Identity", systemImage: "person.crop.circle", tint: .purple) {
+                        IdentityView()
+                    }
                 }
 
-                SidebarFeatureCard(
-                    eyebrow: "SSH Hosts",
-                    title: "Machine",
-                    subtitle: "Manage saved hosts and connection targets with the same iPhone-first launcher card rhythm.",
-                    systemImage: "server.rack",
-                    tint: .blue,
-                    badges: ["Saved Hosts", "Targets"]
+                NavigationLink(
+                    destination: SidebarBrowserContainerView(title: "OpenClaw", urlString: preparedManagementURL),
+                    isActive: $managementActive
                 ) {
-                    MachineView()
+                    EmptyView()
                 }
 
-                SidebarFeatureCard(
-                    eyebrow: "SSH Identity",
-                    title: "Identity",
-                    subtitle: "Manage usernames, passwords, and SSH keys in the same visual shell.",
-                    systemImage: "person.crop.circle",
-                    tint: .purple,
-                    badges: ["Credentials", "SSH Keys"]
+                NavigationLink(
+                    destination: SidebarBrowserContainerView(title: "Cloudflare Tunnel SSH", urlString: preparedCFSSHURL),
+                    isActive: $cfsshActive
                 ) {
-                    IdentityView()
+                    EmptyView()
                 }
             }
             .padding(.horizontal, 16)
@@ -78,132 +103,114 @@ struct SidebarView: View {
 
                 if !store.reducedViewEffects {
                     Circle()
-                        .fill(Color.mint.opacity(0.14))
+                        .fill(Color.mint.opacity(0.12))
                         .frame(width: 220, height: 220)
                         .blur(radius: 42)
                         .offset(x: 90, y: -120)
+                        .allowsHitTesting(false)
 
                     Circle()
-                        .fill(Color.blue.opacity(0.1))
+                        .fill(Color.blue.opacity(0.08))
                         .frame(width: 240, height: 240)
                         .blur(radius: 52)
                         .offset(x: -90, y: 220)
+                        .allowsHitTesting(false)
                 }
             }
         )
     }
 
-    private var launcherCard: some View {
+    @ViewBuilder
+    private func editableURLCard(
+        title: String,
+        buttonTitle: String,
+        placeholder: String,
+        systemImage: String,
+        tint: Color,
+        text: Binding<String>,
+        savedValue: String,
+        persistAction: @escaping (String) -> Void,
+        openAction: @escaping () -> Void,
+        resetAction: @escaping () -> Void
+    ) -> some View {
         SidebarSurface {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(alignment: .top, spacing: 14) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .center, spacing: 10) {
                     ZStack {
-                        Circle()
-                            .fill(Color.mint.opacity(0.22))
-                            .frame(width: 72, height: 72)
-                            .blur(radius: 12)
-
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
                             .fill(
                                 LinearGradient(
-                                    colors: [.blue.opacity(0.96), .mint.opacity(0.82)],
+                                    colors: [tint.opacity(0.95), tint.opacity(0.65)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
-                            .frame(width: 64, height: 64)
+                            .frame(width: 46, height: 46)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                                    .stroke(Color.white.opacity(0.24), lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
                             )
-                            .shadow(color: .mint.opacity(0.32), radius: 18, x: 0, y: 10)
 
-                        Image(systemName: "network")
-                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                        Image(systemName: systemImage)
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                     }
 
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Launcher")
-                            .font(.system(size: 30, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
-
-                        Text("Your iPhone-first entry for OpenClaw, Cloudflare Tunnel SSH, Machine, and Identity.")
-                            .font(.system(.subheadline, design: .rounded))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title)
+                            .font(.system(.headline, design: .rounded).weight(.semibold))
+                        Text("Editable + remembered")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .foregroundColor(.secondary)
                     }
                 }
 
-                HStack(spacing: 8) {
-                    SidebarBadge(title: "Editable URL", systemImage: "link")
-                    SidebarBadge(title: "Auto Saved", systemImage: "externaldrive.fill.badge.checkmark")
-                }
+                TextField(placeholder, text: text)
+                    .textFieldStyle(.plain)
+                    .keyboardType(.URL)
+                    .textInputAutocapitalization(.never)
+                    .disableAutocorrection(true)
+                    .font(.system(.body, design: .monospaced))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 13)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Color.black.opacity(0.1))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+                    .onChange(of: text.wrappedValue) { newValue in
+                        persistAction(newValue)
+                    }
+                    .onSubmit {
+                        openAction()
+                    }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("OpenClaw URL")
-                        .font(.system(.headline, design: .rounded))
+                Text(savedValue)
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
 
-                    TextField("https://example.com", text: $managementInput)
-                        .textFieldStyle(.plain)
-                        .keyboardType(.URL)
-                        .textInputAutocapitalization(.never)
-                        .disableAutocorrection(true)
-                        .font(.system(.body, design: .monospaced))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 13)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(Color.black.opacity(0.12))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        )
-                        .onChange(of: managementInput) { newValue in
-                            managementURL = newValue
-                        }
-                        .onSubmit {
-                            openManagementURL()
-                        }
-
-                    Text("Examples: `openclaw.example.com` or a full `https://...` URL.")
-                        .font(.system(.footnote, design: .rounded))
-                        .foregroundColor(.secondary)
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Label("Saved destination", systemImage: "link")
-                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                        .foregroundColor(.secondary)
-
-                    Text(normalizedManagementURL)
-                        .font(.system(.subheadline, design: .monospaced))
-                        .foregroundColor(.primary)
-                        .textSelection(.enabled)
-                }
-
-                VStack(spacing: 10) {
+                HStack(spacing: 10) {
                     Button {
-                        openManagementURL()
+                        openAction()
                     } label: {
-                        HStack(spacing: 12) {
+                        HStack(spacing: 8) {
                             Image(systemName: "arrow.up.forward.app")
-                                .font(.system(size: 17, weight: .semibold, design: .rounded))
-                            Text("Open OpenClaw")
-                                .font(.system(.headline, design: .rounded).weight(.semibold))
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 14, weight: .bold, design: .rounded))
+                            Text(buttonTitle)
+                                .lineLimit(1)
                         }
+                        .font(.system(.subheadline, design: .rounded).weight(.semibold))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 14)
                         .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
                         .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(
                                     LinearGradient(
-                                        colors: [.accentColor.opacity(0.96), .mint.opacity(0.84)],
+                                        colors: [tint.opacity(0.95), tint.opacity(0.72)],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
@@ -213,72 +220,75 @@ struct SidebarView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        managementInput = defaultOpenClawURL
-                        managementURL = defaultOpenClawURL
+                        resetAction()
                     } label: {
-                        Label("Reset to Default", systemImage: "arrow.counterclockwise")
-                            .frame(maxWidth: .infinity)
+                        Image(systemName: "arrow.counterclockwise")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                            .frame(width: 42, height: 42)
                     }
                     .buttonStyle(.bordered)
-                }
-
-                NavigationLink(
-                    destination: SidebarBrowserContainerView(title: "OpenClaw", urlString: preparedManagementURL),
-                    isActive: $managementActive
-                ) {
-                    EmptyView()
                 }
             }
         }
     }
 
     private var normalizedManagementURL: String {
-        let trimmed = managementURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return defaultOpenClawURL }
+        normalizedURL(from: managementURL, fallback: defaultOpenClawURL)
+    }
+
+    private var normalizedCFSSHURL: String {
+        normalizedURL(from: cfsshURL, fallback: defaultCFSSHURL)
+    }
+
+    private func normalizedURL(from value: String, fallback: String) -> String {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return fallback }
         if trimmed.contains("://") { return trimmed }
         return "https://" + trimmed
     }
 
     private func openManagementURL() {
-        let normalized = normalizedManagementURL(from: managementInput)
+        let normalized = normalizedURL(from: managementInput, fallback: defaultOpenClawURL)
         managementInput = normalized
         managementURL = normalized
         preparedManagementURL = normalized
         managementActive = true
     }
 
-    private func normalizedManagementURL(from value: String) -> String {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return defaultOpenClawURL }
-        if trimmed.contains("://") { return trimmed }
-        return "https://" + trimmed
+    private func openCFSSHURL() {
+        let normalized = normalizedURL(from: cfsshInput, fallback: defaultCFSSHURL)
+        cfsshInput = normalized
+        cfsshURL = normalized
+        preparedCFSSHURL = normalized
+        cfsshActive = true
+    }
+
+    private func resetManagementURL() {
+        managementInput = defaultOpenClawURL
+        managementURL = defaultOpenClawURL
+    }
+
+    private func resetCFSSHURL() {
+        cfsshInput = defaultCFSSHURL
+        cfsshURL = defaultCFSSHURL
     }
 }
 
-private struct SidebarFeatureCard<Destination: View>: View {
-    let eyebrow: String
+private struct SidebarCompactNavCard<Destination: View>: View {
     let title: String
-    let subtitle: String
     let systemImage: String
     let tint: Color
-    let badges: [String]
     let destination: Destination
 
     init(
-        eyebrow: String,
         title: String,
-        subtitle: String,
         systemImage: String,
         tint: Color,
-        badges: [String],
         @ViewBuilder destination: () -> Destination
     ) {
-        self.eyebrow = eyebrow
         self.title = title
-        self.subtitle = subtitle
         self.systemImage = systemImage
         self.tint = tint
-        self.badges = badges
         self.destination = destination()
     }
 
@@ -287,64 +297,41 @@ private struct SidebarFeatureCard<Destination: View>: View {
             destination
         } label: {
             SidebarSurface {
-                HStack(alignment: .top, spacing: 14) {
+                HStack(spacing: 10) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
                             .fill(
                                 LinearGradient(
-                                    colors: [tint.opacity(0.95), tint.opacity(0.62)],
+                                    colors: [tint.opacity(0.95), tint.opacity(0.7)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
-                            .frame(width: 54, height: 54)
+                            .frame(width: 42, height: 42)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
                                     .stroke(Color.white.opacity(0.18), lineWidth: 1)
                             )
+
                         Image(systemName: systemImage)
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                     }
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(eyebrow.uppercased())
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundColor(tint)
+                    Text(title)
+                        .font(.system(.headline, design: .rounded).weight(.semibold))
+                        .foregroundColor(.primary)
 
-                        Text(title)
-                            .font(.system(.title3, design: .rounded).weight(.semibold))
-                            .foregroundColor(.primary)
-
-                        Text(subtitle)
-                            .font(.system(.subheadline, design: .rounded))
-                            .foregroundColor(.secondary)
-
-                        HStack(spacing: 8) {
-                            ForEach(badges, id: \.self) { badge in
-                                Text(badge)
-                                    .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                    .foregroundColor(.primary)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
-                                    .background(
-                                        Capsule(style: .continuous)
-                                            .fill(Color.white.opacity(0.12))
-                                    )
-                            }
-                        }
-                    }
-
-                    Spacer(minLength: 10)
+                    Spacer(minLength: 6)
 
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
                         .foregroundColor(.secondary)
-                        .padding(.top, 4)
                 }
             }
         }
         .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -355,43 +342,26 @@ private struct SidebarSurface<Content: View>: View {
         VStack(alignment: .leading, spacing: 12) {
             content
         }
-        .padding(18)
+        .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(.ultraThinMaterial)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [Color.white.opacity(0.12), Color.clear, Color.white.opacity(0.04)],
+                        colors: [Color.white.opacity(0.1), Color.clear, Color.white.opacity(0.03)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.08), radius: 18, x: 0, y: 12)
-    }
-}
-
-private struct SidebarBadge: View {
-    let title: String
-    let systemImage: String
-
-    var body: some View {
-        Label(title, systemImage: systemImage)
-            .font(.system(size: 11, weight: .semibold, design: .rounded))
-            .foregroundColor(.primary)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(Color.white.opacity(0.14))
-            )
+        .shadow(color: .black.opacity(0.06), radius: 14, x: 0, y: 10)
     }
 }
 
