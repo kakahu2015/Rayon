@@ -304,7 +304,7 @@ struct NativeSSHConnectView: View {
             fillSuggestion()
         }) {
             HStack {
-                Text("Did you mean "\(suggestion!)"?")
+                Text("Did you mean \"\(suggestion!)\"?")
                     .foregroundColor(.white)
                     .font(.system(.headline, design: .rounded))
             }
