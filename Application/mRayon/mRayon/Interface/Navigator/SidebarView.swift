@@ -39,11 +39,6 @@ struct SidebarView: View {
     var app: some View {
         Section("App") {
             NavigationLink {
-                WelcomeView()
-            } label: {
-                Label("Launcher", systemImage: "square.grid.2x2")
-            }
-            NavigationLink {
                 MachineView()
             } label: {
                 Label("Machine", systemImage: "server.rack")
