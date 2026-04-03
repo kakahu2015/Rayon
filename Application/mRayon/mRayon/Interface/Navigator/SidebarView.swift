@@ -32,11 +32,11 @@ struct SidebarView: View {
                 }
 
                 SidebarLinkCard(
-                    title: "CF SSH",
-                    subtitle: "Open the Cloudflare Access protected Web SSH endpoint.",
+                    title: "Cloudflare Tunnel SSH",
+                    subtitle: "Open the Cloudflare Tunnel protected Web SSH endpoint.",
                     systemImage: "lock.shield"
                 ) {
-                    SidebarBrowserContainerView(title: "CF SSH", urlString: "https://ssh.kakahu.org")
+                    SidebarBrowserContainerView(title: "Cloudflare Tunnel SSH", urlString: "https://ssh.kakahu.org")
                 }
 
                 SidebarLinkCard(

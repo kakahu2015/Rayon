@@ -40,13 +40,13 @@ struct WelcomeView: View {
 
                 launcherRouteCard(
                     eyebrow: "Web Route",
-                    title: "CF SSH",
-                    subtitle: "Open the Cloudflare Access protected Web SSH endpoint in the embedded browser.",
+                    title: "Cloudflare Tunnel SSH",
+                    subtitle: "Open the Cloudflare Tunnel protected Web SSH endpoint in the embedded browser.",
                     systemImage: "lock.shield",
                     tint: .mint
                 ) {
                     NavigationLink {
-                        BrowserContainerView(title: "CF SSH", urlString: defaultCFSSHURL)
+                        BrowserContainerView(title: "Cloudflare Tunnel SSH", urlString: defaultCFSSHURL)
                     } label: {
                         Label("Open Web SSH", systemImage: "terminal")
                             .frame(maxWidth: .infinity)
