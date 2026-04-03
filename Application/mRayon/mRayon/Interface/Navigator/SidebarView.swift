@@ -10,6 +10,8 @@ import SwiftUI
 import WebKit
 
 struct SidebarView: View {
+    @EnvironmentObject var store: RayonStore
+
     var body: some View {
         NavigationView {
             sidebar
