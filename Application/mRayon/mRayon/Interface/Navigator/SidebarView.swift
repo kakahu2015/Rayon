@@ -49,7 +49,6 @@ struct SidebarView: View {
                     systemImage: "network",
                     tint: .accentColor,
                     text: $managementInput,
-                    savedValue: normalizedManagementURL,
                     persistAction: { managementURL = $0 },
                     openAction: openManagementURL,
                     resetAction: resetManagementURL
@@ -62,13 +61,12 @@ struct SidebarView: View {
                     systemImage: "lock.shield",
                     tint: .mint,
                     text: $cfsshInput,
-                    savedValue: normalizedCFSSHURL,
                     persistAction: { cfsshURL = $0 },
                     openAction: openCFSSHURL,
                     resetAction: resetCFSSHURL
                 )
 
-                HStack(spacing: 10) {
+                VStack(spacing: 10) {
                     SidebarCompactNavCard(title: "Machine", systemImage: "server.rack", tint: .blue) {
                         MachineView()
                     }
@@ -128,7 +126,6 @@ struct SidebarView: View {
         systemImage: String,
         tint: Color,
         text: Binding<String>,
-        savedValue: String,
         persistAction: @escaping (String) -> Void,
         openAction: @escaping () -> Void,
         resetAction: @escaping () -> Void
@@ -166,32 +163,18 @@ struct SidebarView: View {
                 }
 
                 TextField(placeholder, text: text)
-                    .textFieldStyle(.plain)
+                    .textFieldStyle(.roundedBorder)
                     .keyboardType(.URL)
                     .textInputAutocapitalization(.never)
                     .disableAutocorrection(true)
                     .font(.system(.body, design: .monospaced))
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 13)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.black.opacity(0.1))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                    )
+                    .submitLabel(.go)
                     .onChange(of: text.wrappedValue) { newValue in
                         persistAction(newValue)
                     }
                     .onSubmit {
                         openAction()
                     }
-
-                Text(savedValue)
-                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
 
                 HStack(spacing: 10) {
                     Button {
@@ -356,10 +339,12 @@ private struct SidebarSurface<Content: View>: View {
                         endPoint: .bottomTrailing
                     )
                 )
+                .allowsHitTesting(false)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                .allowsHitTesting(false)
         )
         .shadow(color: .black.opacity(0.06), radius: 14, x: 0, y: 10)
     }
